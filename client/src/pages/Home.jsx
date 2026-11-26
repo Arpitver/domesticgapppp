@@ -15,15 +15,32 @@ export default function Home() {
   const provider = params.get('provider') || '';
 
   useEffect(() => {
-    api.get('/services/categories').then(({ data }) => setCategories(data.categories));
+    api
+      .get('/services/categories')
+      .then(({ data }) => {
+        if (!Array.isArray(data.categories)) {
+          throw new Error('Service API is unavailable. Deploy the backend and set VITE_API_URL.');
+        }
+        setCategories(data.categories);
+      })
+      .catch((e) => setError(errMsg(e)));
   }, []);
 
   useEffect(() => {
     setLoading(true);
+    setError('');
     api
       .get('/services', { params: { category, provider, q: params.get('q') || '' } })
-      .then(({ data }) => setServices(data.services))
-      .catch((e) => setError(errMsg(e)))
+      .then(({ data }) => {
+        if (!Array.isArray(data.services)) {
+          throw new Error('Service API is unavailable. Deploy the backend and set VITE_API_URL.');
+        }
+        setServices(data.services);
+      })
+      .catch((e) => {
+        setServices([]);
+        setError(errMsg(e));
+      })
       .finally(() => setLoading(false));
   }, [category, provider, params]);
 
@@ -77,7 +94,7 @@ export default function Home() {
       {error && <p className="error">{error}</p>}
       {loading ? (
         <p className="muted center">Loading services…</p>
-      ) : services.length === 0 ? (
+      ) : error ? null : services.length === 0 ? (
         <p className="muted center">No services found.</p>
       ) : (
         <div className="grid">

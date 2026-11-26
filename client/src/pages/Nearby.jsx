@@ -14,7 +14,15 @@ export default function Nearby() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.get('/services/categories').then(({ data }) => setCategories(data.categories));
+    api
+      .get('/services/categories')
+      .then(({ data }) => {
+        if (!Array.isArray(data.categories)) {
+          throw new Error('Service API is unavailable. Deploy the backend and set VITE_API_URL.');
+        }
+        setCategories(data.categories);
+      })
+      .catch((e) => setError(errMsg(e)));
     locate();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -30,8 +38,16 @@ export default function Nearby() {
   useEffect(() => {
     api
       .get('/workers/nearby', { params: { lat: center.lat, lng: center.lng, radius, category } })
-      .then(({ data }) => setWorkers(data.workers))
-      .catch((e) => setError(errMsg(e)));
+      .then(({ data }) => {
+        if (!Array.isArray(data.workers)) {
+          throw new Error('Worker API is unavailable. Deploy the backend and set VITE_API_URL.');
+        }
+        setWorkers(data.workers);
+      })
+      .catch((e) => {
+        setWorkers([]);
+        setError(errMsg(e));
+      });
   }, [center, radius, category]);
 
   const markers = [
