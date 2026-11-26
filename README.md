@@ -105,3 +105,12 @@ Booking flow: `pending → accepted → on_the_way → in_progress → completed
 
 - Build the client with `npm run build`, serve `client/dist` from a static host or from Express, and set `VITE_API_URL` and `VITE_SOCKET_URL` at build time if the API lives on another origin.
 - Use a strong `JWT_SECRET`, set `CLIENT_URL` to your deployed origin, and serve everything over HTTPS.
+
+## Deploying to Netlify and Render
+
+- Netlify reads `netlify.toml`; its base directory is `client`, and its publish directory is `dist`.
+- Create a free MongoDB Atlas cluster and database user. In Atlas Network Access, allow connections from Render. Render's free service does not provide a fixed outbound IP, so use a strong database password and restrict access further if your hosting plan supports it.
+- In Render, create a Blueprint from this repository and use `render.yaml`. Enter the Atlas connection string as the `MONGO_URI` secret when prompted. Render generates `JWT_SECRET`; `CLIENT_URL` is set to the Netlify site.
+- After the API deploys, verify `https://<render-service>.onrender.com/api/health` returns `{"ok":true}`.
+- In Netlify environment variables, set `VITE_API_URL` to `https://<render-service>.onrender.com/api` and `VITE_SOCKET_URL` to `https://<render-service>.onrender.com`, then trigger a new deploy. These Vite variables are read at build time.
+- To load demo users and services into a **fresh** database, run `npm run seed` from the server directory. Seeding deletes existing users, services, and bookings first.
